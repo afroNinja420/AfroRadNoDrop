@@ -1,0 +1,17 @@
+name: AfroRadNoDrop
+author: AfroNinja
+version: '1.0-SNAPSHOT'
+main: me.afroninja.afroRadNoDrop.AfroRadNoDrop
+api-version: '1.20'
+description: Prevents players from dropping radioactive items outside permitted worlds.
+
+commands:
+  afroradnodrop:
+    description: Reload AfroRadNoDrop plugin configuration.
+    usage: /<command> reload
+    permission: afroradnodrop.reload
+
+permissions:
+  afroradnodrop.reload:
+    description: Allows reloading the plugin configuration.
+    default: op

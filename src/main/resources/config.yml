@@ -1,0 +1,7 @@
+# List of worlds where dropping radioactive items is allowed
+permitted-worlds:
+  - oneblock
+  - oneblock_nether
+
+# If true, the item will be deleted when dropped in a non-permitted world
+delete-on-drop: false

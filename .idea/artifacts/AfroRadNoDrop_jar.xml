@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="AfroRadNoDrop:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/AfroRadNoDrop_jar</output-path>
+    <root id="archive" name="AfroRadNoDrop.jar">
+      <element id="module-output" name="afroradnodrop" />
+    </root>
+  </artifact>
+</component>
