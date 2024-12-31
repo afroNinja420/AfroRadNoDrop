@@ -5,3 +5,9 @@ permitted-worlds:
 
 # If true, the item will be deleted when dropped in a non-permitted world
 delete-on-drop: false
+
+# In game messages (use '&' for color codes)
+messages:
+  noDrop: "&4You cannot drop radioactive items in this world!"
+  itemDestroyed: "&4The radioactive item has been destroyed!"
+  noPermission: "&4You do not have permission to use this command!"

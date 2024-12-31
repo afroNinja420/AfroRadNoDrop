@@ -16,6 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class AfroRadNoDrop extends JavaPlugin implements Listener {
@@ -23,6 +24,7 @@ public class AfroRadNoDrop extends JavaPlugin implements Listener {
     private static final String RELOAD_PERMISSION = "afroradnodrop.reload";
     private List<String> permittedWorlds;
     private Boolean deleteOnDrop;
+    private HashMap<String, String> messages = new HashMap<String, String>();
 
     @Override
     public void onEnable() {
@@ -51,6 +53,9 @@ public class AfroRadNoDrop extends JavaPlugin implements Listener {
     private void loadConfiguration() {
         FileConfiguration config = getConfig();
         permittedWorlds = config.getStringList("permitted-worlds");
+        messages.put("noDrop", config.getString("messages.noDrop"));
+        messages.put("itemDestroyed", config.getString("messages.itemDestroyed"));
+        messages.put("noPermission", config.getString("messages.noPermission"));
         if (permittedWorlds == null) permittedWorlds = List.of();
         deleteOnDrop = config.getBoolean("delete-on-drop", false);
     }
@@ -60,7 +65,7 @@ public class AfroRadNoDrop extends JavaPlugin implements Listener {
         if (command.getName().equalsIgnoreCase("afroradnodrop")) {
             if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
                 if (!sender.hasPermission(RELOAD_PERMISSION)) {
-                    sender.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
+                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.get("noPermission")));
                     return true;
                 }
                 reloadConfig();
@@ -88,11 +93,11 @@ public class AfroRadNoDrop extends JavaPlugin implements Listener {
                 if (!permittedWorlds.contains(playerWorld.getName())) {
                     if (deleteOnDrop) {
                         event.getItemDrop().remove();
-                        event.getPlayer().sendMessage(ChatColor.RED + "The radioactive item has been destroyed!");
+                        event.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.get("itemDestroyed")));
                         getLogger().info("Radioactive item destroyed for player " + event.getPlayer().getName() + " in world " + playerWorld.getName());
                     } else {
                         event.setCancelled(true);
-                        event.getPlayer().sendMessage(ChatColor.RED + "You cannot drop radioactive items in this world!");
+                        event.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.get("noDrop")));
                         getLogger().info("Radioactive item drop canceled for player " + event.getPlayer().getName() + " in world " + playerWorld.getName());
                     }
                 }
