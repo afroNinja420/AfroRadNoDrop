@@ -6,7 +6,11 @@ permitted-worlds:
 # If true, the item will be deleted when dropped in a non-permitted world
 delete-on-drop: false
 
+# If true, radioactive items will be deleted from inventory drops when a player dies in a non-permitted world
+delete-on-death: true
+
 # In game messages (use '&' for color codes)
+# Color codes: &0-9 (numbers), &a-f (letters), &k-o (formatting), &r (reset)
 messages:
   noDrop: "&4You cannot drop radioactive items in this world!"
   itemDestroyed: "&4The radioactive item has been destroyed!"

@@ -6,8 +6,10 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -17,19 +19,29 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AfroRadNoDrop extends JavaPlugin implements Listener {
 
     private static final String RELOAD_PERMISSION = "afroradnodrop.reload";
-    private List<String> permittedWorlds;
+    private static final String RADIATION_CHECK = "Radiation level:";
+    private Set<String> permittedWorlds;
     private Boolean deleteOnDrop;
-    private HashMap<String, String> messages = new HashMap<String, String>();
+    private Boolean deleteOnDeath;
+    private HashMap<String, String> messages = new HashMap<>();
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        loadConfiguration();
+        try {
+            loadConfiguration();
+        } catch (Exception e) {
+            getLogger().severe("Failed to load configuration: " + e.getMessage());
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
 
         Plugin slimefunPlugin = Bukkit.getPluginManager().getPlugin("Slimefun");
         if (slimefunPlugin == null || !slimefunPlugin.isEnabled()) {
@@ -39,6 +51,10 @@ public class AfroRadNoDrop extends JavaPlugin implements Listener {
         }
 
         getLogger().info("Slimefun detected! AfroRadNoDrop is integrating with Slimefun.");
+
+        if (permittedWorlds.isEmpty()) {
+            getLogger().warning("No permitted worlds defined in config!");
+        }
 
         Bukkit.getPluginManager().registerEvents(this, this);
 
@@ -52,12 +68,12 @@ public class AfroRadNoDrop extends JavaPlugin implements Listener {
 
     private void loadConfiguration() {
         FileConfiguration config = getConfig();
-        permittedWorlds = config.getStringList("permitted-worlds");
-        messages.put("noDrop", config.getString("messages.noDrop"));
-        messages.put("itemDestroyed", config.getString("messages.itemDestroyed"));
-        messages.put("noPermission", config.getString("messages.noPermission"));
-        if (permittedWorlds == null) permittedWorlds = List.of();
+        permittedWorlds = new HashSet<>(config.getStringList("permitted-worlds"));
+        messages.put("noDrop", config.getString("messages.noDrop", "&cYou cannot drop radioactive items here!"));
+        messages.put("itemDestroyed", config.getString("messages.itemDestroyed", "&cRadioactive item destroyed!"));
+        messages.put("noPermission", config.getString("messages.noPermission", "&cNo permission!"));
         deleteOnDrop = config.getBoolean("delete-on-drop", false);
+        deleteOnDeath = config.getBoolean("delete-on-death", true);
     }
 
     @Override
@@ -85,11 +101,11 @@ public class AfroRadNoDrop extends JavaPlugin implements Listener {
         ItemMeta droppedItemMeta = droppedItem.getItemMeta();
 
         List<String> lore = droppedItemMeta.hasLore() ? droppedItemMeta.getLore() : new ArrayList<>();
+        if (lore == null) lore = new ArrayList<>();
 
-        assert lore != null;
         for (String s : lore) {
             getLogger().info(s);
-            if (s.contains("Radiation level:")){
+            if (s.contains(RADIATION_CHECK)) {
                 if (!permittedWorlds.contains(playerWorld.getName())) {
                     if (deleteOnDrop) {
                         event.getItemDrop().remove();
@@ -101,6 +117,34 @@ public class AfroRadNoDrop extends JavaPlugin implements Listener {
                         getLogger().info("Radioactive item drop canceled for player " + event.getPlayer().getName() + " in world " + playerWorld.getName());
                     }
                 }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        World playerWorld = event.getEntity().getWorld();
+        if (!permittedWorlds.contains(playerWorld.getName()) && deleteOnDeath) {
+            List<ItemStack> drops = event.getDrops();
+            List<ItemStack> toRemove = new ArrayList<>();
+
+            for (ItemStack item : drops) {
+                ItemMeta meta = item.getItemMeta();
+                List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+                if (lore == null) lore = new ArrayList<>();
+
+                for (String s : lore) {
+                    if (s.contains(RADIATION_CHECK)) {
+                        toRemove.add(item);
+                        getLogger().info("Radioactive item removed from death drops for player " + event.getEntity().getName() + " in world " + playerWorld.getName());
+                        break;
+                    }
+                }
+            }
+
+            if (!toRemove.isEmpty()) {
+                drops.removeAll(toRemove);
+                event.getEntity().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.get("itemDestroyed")));
             }
         }
     }
